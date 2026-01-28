@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ORMA/ARM Texture Generator (Enhanced for Inzoi/UE)</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--dark-color);
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            border-radius: var(--border-radius);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .preset-group {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        input[type="file"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        input[type="file"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        #generateBtn {
+            background: linear-gradient(to right, var(--primary-color), #2980b9);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+        }
+        
+        #presetSelect {
+            background-color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        #generateBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(52, 152, 219, 0.4);
+            background: linear-gradient(to right, #2980b9, var(--primary-color));
+        }
+        
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        
+        .texture-container {
+            text-align: center;
+            flex: 1;
+            min-width: 450px;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .texture-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .texture-container .control-group {
+            text-align: left;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .texture-container small {
+            display: block;
+            margin-top: 5px;
+            line-height: 1.2;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-row input[type="range"] {
+            flex-grow: 1;
+            margin: 0;
+        }
+        
+        .slider-row input[type="number"] {
+            width: 70px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .reset-btn {
+            background: #f1f1f1;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            width: auto;
+            margin: 0;
+            box-shadow: none;
+            border-radius: 4px;
+            text-transform: none;
+        }
+
+        .reset-btn:hover {
+            background: #e2e6ea;
+            color: #333;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .texture-title {
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--dark-color);
+            font-size: 1.1rem;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--light-color);
+        }
+        
+        canvas {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            object-fit: contain;
+        }
+        
+        .download-btn {
+            background: linear-gradient(to right, var(--secondary-color), #27ae60);
+            color: white;
+            margin-top: 15px;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3);
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(46, 204, 113, 0.4);
+            background: linear-gradient(to right, #27ae60, var(--secondary-color));
+        }
+        
+        .pack-download-btn {
+            background: linear-gradient(to right, var(--warning-color), #e67e22);
+            color: white;
+            margin: 10px auto;
+            font-size: 1.1rem;
+            padding: 15px 30px;
+            display: block;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(243, 156, 18, 0.3);
+        }
+        
+        .pack-download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(243, 156, 18, 0.4);
+            background: linear-gradient(to right, #e67e22, var(--warning-color));
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        #google_translate_element {
+            text-align: right;
+            margin-bottom: 15px;
+            min-height: 40px; /* Reserva espacio para evitar saltos */
+        }
+        
+        /* Fix for Google Translate on buttons */
+        button span {
+            pointer-events: none;
+        }
+
+        /* Tooltip Styles */
+        .tooltip-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .tooltip-icon {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 18px;
+            height: 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 8px;
+            position: relative;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: var(--dark-color);
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 135%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.85rem;
+            font-weight: normal;
+            line-height: 1.4;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark-color) transparent transparent transparent;
+        }
+
+        .tooltip-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="google_translate_element"></div>
+        <div style="text-align: right; margin-bottom: 10px;"><a href="#" id="resetLangBtn" style="color: #7f8c8d; font-size: 0.8rem; text-decoration: none;">Reset Language / Reiniciar Idioma</a></div>
+        <h1>ORMA/ARM Texture Generator (Enhanced for Inzoi/UE)</h1>
+        <p class="subtitle">Optimized for Inzoi Modkit & UE 5.4/5.6</p>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Upload base color or individual maps (optional)</li>
+                <li>Choose texture size and adjust sliders</li>
+                <li>Click "Generate Textures" to process</li>
+                <li>View and download separate or packed textures</li>
+            </ul>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group preset-group">
+                <label for="presetSelect">Material Preset:</label>
+                <select id="presetSelect">
+                    <option value="default">Custom / Default</option>
+                    <option value="plastic_shiny">Plastic Shiny</option>
+                    <option value="plastic_matte">Plastic Matte</option>
+                    <option value="metal_polished">Metal Polished</option>
+                    <option value="metal_rough">Metal Rough</option>
+                    <option value="wool">Fabric: Wool</option>
+                    <option value="cotton">Fabric: Cotton</option>
+                    <option value="silk">Fabric: Silk</option>
+                    <option value="denim">Fabric: Denim</option>
+                    <option value="leather">Leather</option>
+                    <option value="hair">Hair</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="baseInput">Base Color Image:</label>
+                <input type="file" id="baseInput" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="aoInput">Ambient Occlusion Image (optional):</label>
+                <input type="file" id="aoInput" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="roughInput">Roughness Image (optional):</label>
+                <input type="file" id="roughInput" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="metInput">Metallic Image (optional):</label>
+                <input type="file" id="metInput" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="heightInput">Height/Alpha Image (optional):</label>
+                <input type="file" id="heightInput" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="sizeSelect">Texture size:</label>
+                <select id="sizeSelect">
+                    <option value="512">512px</option>
+                    <option value="1024" selected>1024px</option>
+                    <option value="2048">2048px</option>
+                    <option value="4096">4096px</option>
+                    <option value="8192">8192px</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="generateNormals"> Generate normal map
+                </label>
+            </div>
+
+            <button id="generateBtn"><span>Generate Textures</span></button>
+        </div>
+        
+        <div id="resultsContainer" class="hidden">
+            <div id="imagePreview" class="image-preview">
+                <div class="texture-container" id="baseContainer">
+                    <div class="texture-title">Base Image</div>
+                    <canvas id="baseCanvas"></canvas>
+                    <button class="download-btn" data-canvas="baseCanvas"><span>Download Base Image</span></button>
+                </div>
+                
+                <div class="texture-container" id="aoContainer">
+                    <div class="texture-title">Ambient Occlusion (O)</div>
+                    <canvas id="aoCanvas"></canvas>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="aoSlider" style="margin:0">AO Intensity</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Controls ambient occlusion (Channel R).<br>• <strong>0%:</strong> Clean surface (plastic).<br>• <strong>100%:</strong> Deep cracks (organic).<br>Use "Invert" for realism.</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="aoReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="aoSlider" min="0" max="100" value="50">
+                            <input type="number" id="aoNumber" min="0" max="100" value="50">
+                        </div>
+                        <small>Adjusts ambient occlusion</small>
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="invertAO"> Invert AO map
+                        </label>
+                    </div>
+                    <button class="download-btn" data-canvas="aoCanvas"><span>Download Ambient Occlusion</span></button>
+                </div>
+
+                <div class="texture-container" id="roughnessContainer">
+                    <div class="texture-title">Roughness (R)</div>
+                    <canvas id="roughnessCanvas"></canvas>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="roughnessSlider" style="margin:0">Roughness</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Controls roughness (Channel G).<br>• <strong>0%:</strong> Smooth/Mirror (reflections).<br>• <strong>100%:</strong> Matte/Rough (fabric, wood).<br>Avoids "cheap plastic" look.</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="roughnessReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="roughnessSlider" min="0" max="100" value="50">
+                            <input type="number" id="roughnessNumber" min="0" max="100" value="50">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="noiseSlider" style="margin:0">Noise</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Adds Perlin noise variation to the Roughness channel to break uniformity and add realism to organic surfaces.</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="noiseReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="noiseSlider" min="0" max="100" value="0">
+                            <input type="number" id="noiseNumber" min="0" max="100" value="0">
+                        </div>
+                        <small>Adds Perlin noise</small>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="noiseScaleSlider" style="margin:0">Noise Scale</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Defines the size of the noise pattern.<br>• <strong>Low:</strong> Fine noise (fabric, micro-details).<br>• <strong>High:</strong> Large spots (dirt, wear).</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="noiseScaleReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="noiseScaleSlider" min="5" max="150" value="64">
+                            <input type="number" id="noiseScaleNumber" min="5" max="150" value="64">
+                        </div>
+                        <small>Scale of noise (Lower = Finer)</small>
+                    </div>
+                    <button class="download-btn" data-canvas="roughnessCanvas"><span>Download Roughness</span></button>
+                </div>
+
+                <div class="texture-container" id="metallicContainer">
+                    <div class="texture-title">Metallic (M)</div>
+                    <canvas id="metallicCanvas"></canvas>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="metallicSlider" style="margin:0">Metallic</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Defines metallicity (Channel B).<br>• <strong>0%:</strong> Non-metal (plastic, wood, skin).<br>• <strong>100%:</strong> Metal (gold, steel, chrome).<br>Generally use 0 or 100.</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="metallicReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="metallicSlider" min="0" max="100" value="0">
+                            <input type="number" id="metallicNumber" min="0" max="100" value="0">
+                        </div>
+                        <small>Adjusts metallic level</small>
+                    </div>
+                    <button class="download-btn" data-canvas="metallicCanvas"><span>Download Metallic</span></button>
+                </div>
+
+                <div class="texture-container" id="heightContainer">
+                    <div class="texture-title">Height Map (A)</div>
+                    <canvas id="heightCanvas"></canvas>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="alphaSlider" style="margin:0">Alpha/Height</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Controls the Alpha channel (A).<br>Used for Parallax effects (simulated depth) or as an Opacity mask in the engine.</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="alphaReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="alphaSlider" min="0" max="100" value="100">
+                            <input type="number" id="alphaNumber" min="0" max="100" value="100">
+                        </div>
+                        <small>Controls alpha channel</small>
+                    </div>
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="useBaseAlpha"> Use Base Image Alpha (Opacity)
+                        </label>
+                    </div>
+                    <button class="download-btn" data-canvas="heightCanvas"><span>Download Height Map</span></button>
+                </div>
+                
+                <div class="texture-container" id="ormaContainer">
+                    <div class="texture-title">ORMA Texture (R=O, G=R, B=M, A=A)</div>
+                    <canvas id="ormaCanvas"></canvas>
+                    <button class="download-btn" data-canvas="ormaCanvas"><span>Download ORMA Texture</span></button>
+                </div>
+
+                <div id="normalsContainer" class="texture-container hidden">
+                    <div class="texture-title">Normal Map</div>
+                    <canvas id="normalsCanvas"></canvas>
+                    <div class="control-group">
+                        <div class="control-header">
+                            <div class="tooltip-wrapper">
+                                <label for="normalStrengthSlider" style="margin:0">Strength</label>
+                                <div class="tooltip-icon">?
+                                    <span class="tooltip-text">Amplifies the relief of the normal map.<br>• <strong>Low:</strong> Soft.<br>• <strong>High:</strong> Detailed (veins, deep cracks).</span>
+                                </div>
+                            </div>
+                            <button class="reset-btn" id="normalStrengthReset">Reset</button>
+                        </div>
+                        <div class="slider-row">
+                            <input type="range" id="normalStrengthSlider" min="0" max="5" step="0.1" value="1">
+                            <input type="number" id="normalStrengthNumber" min="0" max="5" step="0.1" value="1">
+                        </div>
+                        <small>Adjusts normal intensity</small>
+                    </div>
+                    <button class="download-btn" data-canvas="normalsCanvas"><span>Download Normal Map</span></button>
+                </div>
+            </div>
+            
+            <div class="pack-download-options">
+                <button id="packDownloadBtn" class="pack-download-btn"><span>Download ORMA Package</span></button>
+                <button id="armPackDownloadBtn" class="pack-download-btn" style="background: linear-gradient(to right, #9b59b6, #8e44ad); margin-top: 10px;"><span>Download ARM Package</span></button>
+                <button id="allTexturesPackDownloadBtn" class="pack-download-btn" style="background: linear-gradient(to right, #1abc9c, #16a085); margin-top: 10px;"><span>Download All Textures</span></button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>ORMA/ARM Texture Generator | Runs completely in the browser</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Perlin Noise Implementation ---
+            const Perlin = {
+                p: new Uint8Array(512),
+                init: function() {
+                    const p = new Uint8Array(256);
+                    for (let i = 0; i < 256; i++) p[i] = i;
+                    for (let i = 255; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [p[i], p[j]] = [p[j], p[i]];
+                    }
+                    for (let i = 0; i < 256; i++) this.p[i] = this.p[i + 256] = p[i];
+                },
+                fade: t => t * t * t * (t * (t * 6 - 15) + 10),
+                lerp: (t, a, b) => a + t * (b - a),
+                grad: function(hash, x, y, z) {
+                    const h = hash & 15;
+                    const u = h < 8 ? x : y;
+                    const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+                    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+                },
+                noise: function(x, y, z = 0) {
+                    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+                    x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+                    const u = this.fade(x), v = this.fade(y), w = this.fade(z);
+                    const A = this.p[X] + Y, AA = this.p[A] + Z, AB = this.p[A + 1] + Z;
+                    const B = this.p[X + 1] + Y, BA = this.p[B] + Z, BB = this.p[B + 1] + Z;
+                    return this.lerp(w, this.lerp(v, this.lerp(u, this.grad(this.p[AA], x, y, z), this.grad(this.p[BA], x - 1, y, z)), this.lerp(u, this.grad(this.p[AB], x, y - 1, z), this.grad(this.p[BB], x - 1, y - 1, z))), this.lerp(v, this.lerp(u, this.grad(this.p[AA + 1], x, y, z - 1), this.grad(this.p[BA + 1], x - 1, y, z - 1)), this.lerp(u, this.grad(this.p[AB + 1], x, y - 1, z - 1), this.grad(this.p[BB + 1], x - 1, y - 1, z - 1))));
+                }
+            };
+            Perlin.init();
+
+            const baseInput = document.getElementById('baseInput');
+            const aoInput = document.getElementById('aoInput');
+            const roughInput = document.getElementById('roughInput');
+            const metInput = document.getElementById('metInput');
+            const heightInput = document.getElementById('heightInput');
+            const sizeSelect = document.getElementById('sizeSelect');
+            const presetSelect = document.getElementById('presetSelect');
+            const generateBtn = document.getElementById('generateBtn');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const baseCanvas = document.getElementById('baseCanvas');
+            const aoCanvas = document.getElementById('aoCanvas');
+            const roughnessCanvas = document.getElementById('roughnessCanvas');
+            const metallicCanvas = document.getElementById('metallicCanvas');
+            const heightCanvas = document.getElementById('heightCanvas');
+            const ormaCanvas = document.getElementById('ormaCanvas');
+            const normalsCanvas = document.getElementById('normalsCanvas');
+            const normalsContainer = document.getElementById('normalsContainer');
+            const baseContainer = document.getElementById('baseContainer');
+            const aoContainer = document.getElementById('aoContainer');
+            const roughnessContainer = document.getElementById('roughnessContainer');
+            const metallicContainer = document.getElementById('metallicContainer');
+            const heightContainer = document.getElementById('heightContainer');
+            const ormaContainer = document.getElementById('ormaContainer');
+            const downloadButtons = document.querySelectorAll('.download-btn');
+            const packDownloadBtn = document.getElementById('packDownloadBtn');
+            const armPackDownloadBtn = document.getElementById('armPackDownloadBtn');
+            const allTexturesPackDownloadBtn = document.getElementById('allTexturesPackDownloadBtn');
+            const noiseSlider = document.getElementById('noiseSlider');
+            const noiseScaleSlider = document.getElementById('noiseScaleSlider');
+            const roughnessSlider = document.getElementById('roughnessSlider');
+            const metallicSlider = document.getElementById('metallicSlider');
+            const aoSlider = document.getElementById('aoSlider');
+            const alphaSlider = document.getElementById('alphaSlider');
+            const normalStrengthSlider = document.getElementById('normalStrengthSlider');
+            const generateNormalsCheckbox = document.getElementById('generateNormals');
+            const useBaseAlphaCheckbox = document.getElementById('useBaseAlpha');
+            const invertAOCheckbox = document.getElementById('invertAO');
+            
+            let baseImage = null;
+            let aoImage = null;
+            let roughImage = null;
+            let metImage = null;
+            let heightImage = null;
+
+            // Update slider value displays
+            // Also trigger generation on input for real-time preview
+            const triggerUpdate = () => {
+                // Use requestAnimationFrame to prevent UI blocking during rapid slider movement
+                requestAnimationFrame(() => generateTextures());
+            };
+
+            // Helper to setup slider + number input + reset
+            function setupControl(sliderId, numberId, resetId, defaultValue) {
+                const slider = document.getElementById(sliderId);
+                const number = document.getElementById(numberId);
+                const reset = document.getElementById(resetId);
+
+                slider.addEventListener('input', () => {
+                    number.value = slider.value;
+                    triggerUpdate();
+                });
+
+                number.addEventListener('input', () => {
+                    slider.value = number.value;
+                    triggerUpdate();
+                });
+
+                reset.addEventListener('click', () => {
+                    slider.value = defaultValue;
+                    number.value = defaultValue;
+                    triggerUpdate();
+                });
+            }
+
+            setupControl('aoSlider', 'aoNumber', 'aoReset', 50);
+            setupControl('roughnessSlider', 'roughnessNumber', 'roughnessReset', 50);
+            setupControl('noiseSlider', 'noiseNumber', 'noiseReset', 0);
+            setupControl('noiseScaleSlider', 'noiseScaleNumber', 'noiseScaleReset', 64);
+            setupControl('metallicSlider', 'metallicNumber', 'metallicReset', 0);
+            setupControl('alphaSlider', 'alphaNumber', 'alphaReset', 100);
+            setupControl('normalStrengthSlider', 'normalStrengthNumber', 'normalStrengthReset', 1);
+            
+            // Checkboxes and Selects should also trigger update
+            [generateNormalsCheckbox, invertAOCheckbox, useBaseAlphaCheckbox, sizeSelect].forEach(el => {
+                el.addEventListener('change', triggerUpdate);
+            });
+
+            // Material Presets Logic
+            const materialPresets = {
+                'default': { ao: 50, roughness: 50, metallic: 0, noise: 0, noiseScale: 64, alpha: 100, normal: 1.0 },
+                'plastic_shiny': { ao: 30, roughness: 15, metallic: 0, noise: 2, noiseScale: 100, alpha: 100, normal: 0.5 },
+                'plastic_matte': { ao: 50, roughness: 75, metallic: 0, noise: 10, noiseScale: 50, alpha: 100, normal: 0.8 },
+                'metal_polished': { ao: 20, roughness: 5, metallic: 100, noise: 2, noiseScale: 100, alpha: 100, normal: 0.5 },
+                'metal_rough': { ao: 70, roughness: 60, metallic: 100, noise: 30, noiseScale: 40, alpha: 100, normal: 1.5 },
+                'wool': { ao: 75, roughness: 95, metallic: 0, noise: 50, noiseScale: 10, alpha: 100, normal: 2.5 },
+                'cotton': { ao: 50, roughness: 85, metallic: 0, noise: 25, noiseScale: 20, alpha: 100, normal: 1.2 },
+                'silk': { ao: 30, roughness: 30, metallic: 5, noise: 5, noiseScale: 30, alpha: 100, normal: 0.6 },
+                'denim': { ao: 60, roughness: 80, metallic: 0, noise: 35, noiseScale: 15, alpha: 100, normal: 1.8 },
+                'leather': { ao: 60, roughness: 40, metallic: 0, noise: 25, noiseScale: 35, alpha: 100, normal: 1.5 },
+                'hair': { ao: 40, roughness: 45, metallic: 0, noise: 15, noiseScale: 15, alpha: 100, normal: 1.5 }
+            };
+
+            presetSelect.addEventListener('change', function() {
+                const preset = materialPresets[this.value];
+                if (preset) {
+                    const updateVal = (id, val) => {
+                        const slider = document.getElementById(id + 'Slider');
+                        const number = document.getElementById(id + 'Number');
+                        if (slider && number) {
+                            slider.value = val;
+                            number.value = val;
+                        }
+                    };
+
+                    updateVal('ao', preset.ao);
+                    updateVal('roughness', preset.roughness);
+                    updateVal('metallic', preset.metallic);
+                    updateVal('noise', preset.noise);
+                    updateVal('noiseScale', preset.noiseScale);
+                    updateVal('alpha', preset.alpha);
+                    updateVal('normalStrength', preset.normal);
+                    
+                    triggerUpdate();
+                }
+            });
+
+            // Handle file selections
+            function loadImage(input, callback) {
+                input.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const img = new Image();
+                            img.onload = function() {
+                                callback(img);
+                            };
+                            img.src = event.target.result;
+                        };
+                        reader.readAsDataURL(e.target.files[0]);
+                    }
+                });
+            }
+
+            loadImage(baseInput, img => { baseImage = img; generateTextures(); });
+            loadImage(aoInput, img => { aoImage = img; generateTextures(); });
+            loadImage(roughInput, img => { roughImage = img; generateTextures(); });
+            loadImage(metInput, img => { metImage = img; generateTextures(); });
+            loadImage(heightInput, img => { heightImage = img; generateTextures(); });
+
+            // Function to resize image maintaining aspect ratio (cover mode)
+            function resizeImage(image, targetSize) {
+                const canvas = document.createElement('canvas');
+                canvas.width = targetSize;
+                canvas.height = targetSize;
+                const ctx = canvas.getContext('2d');
+                
+                const scale = Math.max(targetSize / image.width, targetSize / image.height);
+                const width = image.width * scale;
+                const height = image.height * scale;
+                const x = (targetSize - width) / 2;
+                const y = (targetSize - height) / 2;
+                
+                ctx.drawImage(image, x, y, width, height);
+                return canvas;
+            }
+
+            // Helper to get canvas from image or generate default
+            async function getOrGenerateCanvas(inputImage, targetSize, generateFunc) {
+                if (inputImage) {
+                    return resizeImage(inputImage, targetSize);
+                } else {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = targetSize;
+                    tempCanvas.height = targetSize;
+                    generateFunc(tempCanvas.getContext('2d'), targetSize); // Assume generateFunc fills it
+                    return tempCanvas;
+                }
+            }
+
+            // Main Generation Function (Refactored for reuse)
+            let isGenerating = false;
+            let pendingUpdate = false;
+
+            async function generateTextures() {
+                if (isGenerating) {
+                    pendingUpdate = true;
+                    return;
+                }
+                isGenerating = true;
+
+                const targetSize = parseInt(sizeSelect.value);
+
+                // Base
+                let resizedBaseCanvas = null;
+                if (baseImage) {
+                    resizedBaseCanvas = resizeImage(baseImage, targetSize);
+                    baseCanvas.width = targetSize;
+                    baseCanvas.height = targetSize;
+                    baseCanvas.getContext('2d').drawImage(resizedBaseCanvas, 0, 0);
+                } else {
+                    baseCanvas.width = targetSize;
+                    baseCanvas.height = targetSize;
+                    const baseCtx = baseCanvas.getContext('2d');
+                    baseCtx.fillStyle = '#888888';
+                    baseCtx.fillRect(0, 0, targetSize, targetSize);
+                    resizedBaseCanvas = baseCanvas;
+                }
+
+                // Use individual inputs if provided, else generate from base
+                const aoSource = await getOrGenerateCanvas(aoImage, targetSize, (ctx, size) => generateAOMap(resizedBaseCanvas, size, ctx.canvas));
+                aoCanvas.width = targetSize;
+                aoCanvas.height = targetSize;
+                aoCanvas.getContext('2d').drawImage(aoSource, 0, 0);
+
+                const roughSource = await getOrGenerateCanvas(roughImage, targetSize, (ctx, size) => generateRoughnessMap(resizedBaseCanvas, size, ctx.canvas));
+                roughnessCanvas.width = targetSize;
+                roughnessCanvas.height = targetSize;
+                roughnessCanvas.getContext('2d').drawImage(roughSource, 0, 0);
+
+                const metSource = await getOrGenerateCanvas(metImage, targetSize, (ctx, size) => generateMetallicMap(resizedBaseCanvas, size, ctx.canvas));
+                metallicCanvas.width = targetSize;
+                metallicCanvas.height = targetSize;
+                metallicCanvas.getContext('2d').drawImage(metSource, 0, 0);
+
+                const heightSource = await getOrGenerateCanvas(heightImage, targetSize, (ctx, size) => generateHeightMap(resizedBaseCanvas, size, ctx.canvas));
+                heightCanvas.width = targetSize;
+                heightCanvas.height = targetSize;
+                heightCanvas.getContext('2d').drawImage(heightSource, 0, 0);
+
+                // Generate ORMA
+                generateORMATexture(targetSize);
+
+                // Normal if checked
+                if (generateNormalsCheckbox.checked) {
+                    generateNormalMap(resizedBaseCanvas, targetSize);
+                    normalsContainer.classList.remove('hidden');
+                } else {
+                    normalsContainer.classList.add('hidden');
+                }
+
+                resultsContainer.classList.remove('hidden');
+                
+                isGenerating = false;
+                if (pendingUpdate) {
+                    pendingUpdate = false;
+                    generateTextures();
+                }
+            }
+
+            // Generate textures button (now just calls the main function)
+            generateBtn.addEventListener('click', function() {
+                generateTextures();
+            });
+
+            // Improved generate functions
+            function generateAOMap(inputCanvas, size, targetCanvas = aoCanvas) {
+                targetCanvas.width = size;
+                targetCanvas.height = size;
+                const ctx = targetCanvas.getContext('2d');
+                const imageData = ctx.createImageData(size, size);
+                const outputData = imageData.data;
+
+                const aoIntensity = parseInt(aoSlider.value) / 100;
+                const inputCtx = inputCanvas.getContext('2d');
+                const inputImageData = inputCtx.getImageData(0, 0, size, size);
+                const inputData = inputImageData.data;
+
+                // Simple Sobel for edge/cavity
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const i = (y * size + x) * 4;
+                        const luminance = getLuminance(inputData, x, y, size);
+
+                        // Sobel approx
+                        const gx = getLuminance(inputData, x+1, y-1, size) + 2*getLuminance(inputData, x+1, y, size) + getLuminance(inputData, x+1, y+1, size) -
+                                   getLuminance(inputData, x-1, y-1, size) - 2*getLuminance(inputData, x-1, y, size) - getLuminance(inputData, x-1, y+1, size);
+                        const gy = getLuminance(inputData, x-1, y+1, size) + 2*getLuminance(inputData, x, y+1, size) + getLuminance(inputData, x+1, y+1, size) -
+                                   getLuminance(inputData, x-1, y-1, size) - 2*getLuminance(inputData, x, y-1, size) - getLuminance(inputData, x+1, y-1, size);
+                        let edge = Math.sqrt(gx*gx + gy*gy) / 4; // Normalize
+                        edge = Math.min(255, edge);
+
+                        let value = luminance * (1 - edge / 255);
+                        if (invertAOCheckbox.checked) value = 255 - value;
+                        value = value * (1 - aoIntensity) + (255 * aoIntensity);
+
+                        outputData[i] = value;
+                        outputData[i + 1] = value;
+                        outputData[i + 2] = value;
+                        outputData[i + 3] = 255;
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            function generateRoughnessMap(inputCanvas, size, targetCanvas = roughnessCanvas) {
+                targetCanvas.width = size;
+                targetCanvas.height = size;
+                const ctx = targetCanvas.getContext('2d');
+                const imageData = ctx.createImageData(size, size);
+                const outputData = imageData.data;
+
+                const noiseScale = parseFloat(noiseScaleSlider.value) || 64;
+                const noiseIntensity = parseInt(noiseSlider.value) / 100;
+                const roughnessIntensity = parseInt(roughnessSlider.value) / 100;
+                const inputData = inputCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const i = (y * size + x) * 4;
+                        const luminance = getLuminance(inputData, x, y, size);
+                        const alpha = inputData[i + 3];
+                        let value = 255 - luminance; // Invert
+                        value = value * (1 - roughnessIntensity) + (255 * roughnessIntensity);
+
+                        if (noiseIntensity > 0) {
+                            const noise = (Perlin.noise(x / noiseScale, y / noiseScale, 0) * 0.5 + 0.5) * 255; // Noise as 0-255 value
+                            value = value * (1 - noiseIntensity) + noise * noiseIntensity; // Blend original value with noise
+                        }
+                        value = Math.max(0, Math.min(255, value)); // Clamp
+                        outputData[i] = value;
+                        outputData[i + 1] = value;
+                        outputData[i + 2] = value;
+                        outputData[i + 3] = alpha;
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+
+            function generateMetallicMap(inputCanvas, size, targetCanvas = metallicCanvas) {
+                targetCanvas.width = size;
+                targetCanvas.height = size;
+                const ctx = targetCanvas.getContext('2d');
+                const imageData = ctx.createImageData(size, size);
+                const outputData = imageData.data;
+
+                const metallicIntensity = parseInt(metallicSlider.value) / 100;
+                const inputData = inputCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+
+                for (let i = 0; i < outputData.length; i += 4) {
+                    const r = inputData[i];
+                    const g = inputData[i + 1];
+                    const b = inputData[i + 2];
+                    const [h, s, l] = rgbToHsl(r, g, b);
+                    let value = s * 255 * (h / 60 > 0.5 ? 1 : 0.5); // Basic hue bias for warm metals
+                    value = (l * 255 + value) / 2; // Blend with luminance
+                    value = value * (1 - metallicIntensity) + (255 * metallicIntensity);
+                    outputData[i] = value;
+                    outputData[i + 1] = value;
+                    outputData[i + 2] = value;
+                    outputData[i + 3] = 255;
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            function generateHeightMap(inputCanvas, size, targetCanvas = heightCanvas) {
+                targetCanvas.width = size;
+                targetCanvas.height = size;
+                const ctx = targetCanvas.getContext('2d');
+                const imageData = ctx.createImageData(size, size);
+                const outputData = imageData.data;
+
+                const useBaseAlpha = useBaseAlphaCheckbox.checked;
+                const inputData = inputCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+
+                for (let i = 0; i < outputData.length; i += 4) {
+                    let val;
+                    if (useBaseAlpha) {
+                        val = inputData[i + 3]; // Use Alpha channel directly
+                    } else {
+                        val = getLuminance(inputData, i / 4 % size, Math.floor(i / 4 / size), size);
+                        val = Math.min(255, Math.max(0, (val - 128) * 1.2 + 128)); // Contrast
+                    }
+                    outputData[i] = val;
+                    outputData[i + 1] = val;
+                    outputData[i + 2] = val;
+                    outputData[i + 3] = 255;
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            // Helper functions
+            function getLuminance(data, x, y, size) {
+                if (x < 0 || x >= size || y < 0 || y >= size) return 128;
+                const i = (y * size + x) * 4;
+                return 0.2126 * data[i] + 0.7152 * data[i+1] + 0.0722 * data[i+2];
+            }
+
+            function rgbToHsl(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+                if (max === min) {
+                    h = s = 0;
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+                    h *= 60;
+                }
+                return [h, s, l];
+            }
+
+            // ORMA combine (same as before)
+            function generateORMATexture(size) {
+                ormaCanvas.width = size;
+                ormaCanvas.height = size;
+                const ctx = ormaCanvas.getContext('2d');
+                const aoData = aoCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+                const roughnessData = roughnessCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+                const metallicData = metallicCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+                const heightData = heightCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+                const ormaImageData = ctx.createImageData(size, size);
+                const ormaData = ormaImageData.data;
+                const alphaIntensity = parseInt(alphaSlider.value) / 100;
+                for (let i = 0; i < ormaData.length; i += 4) {
+                    ormaData[i] = aoData[i];
+                    ormaData[i + 1] = roughnessData[i];
+                    ormaData[i + 2] = metallicData[i];
+                    ormaData[i + 3] = heightData[i] * alphaIntensity;
+                }
+                ctx.putImageData(ormaImageData, 0, 0);
+            }
+
+            // Normal map (with strength)
+            function generateNormalMap(inputCanvas, size) {
+                normalsCanvas.width = size;
+                normalsCanvas.height = size;
+                const ctx = normalsCanvas.getContext('2d');
+                const inputData = inputCanvas.getContext('2d').getImageData(0, 0, size, size).data;
+                const normalImageData = ctx.createImageData(size, size);
+                const output = normalImageData.data;
+                const strength = parseFloat(normalStrengthSlider.value);
+
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const i = (y * size + x) * 4;
+                        const left = getLuminance(inputData, x - 1, y, size);
+                        const right = getLuminance(inputData, x + 1, y, size);
+                        const top = getLuminance(inputData, x, y - 1, size);
+                        const bottom = getLuminance(inputData, x, y + 1, size);
+                        let dx = (left - right) / 2 * strength;
+                        let dy = (top - bottom) / 2 * strength;
+                        const normal = [dx, dy, 1.0];
+                        const length = Math.sqrt(normal[0]**2 + normal[1]**2 + normal[2]**2);
+                        if (length > 0) {
+                            normal[0] /= length;
+                            normal[1] /= length;
+                            normal[2] /= length;
+                        }
+                        output[i] = Math.round((normal[0] + 1) * 127.5);
+                        output[i + 1] = Math.round((normal[1] + 1) * 127.5);
+                        output[i + 2] = Math.round((normal[2] + 1) * 127.5);
+                        output[i + 3] = 255;
+                    }
+                }
+                ctx.putImageData(normalImageData, 0, 0);
+            }
+
+            // Download functions (same as before)
+            function downloadCanvasAsImage(canvas, filename) {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+
+            downloadButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const canvasId = this.getAttribute('data-canvas');
+                    const canvas = document.getElementById(canvasId);
+                    // Derive filename from canvas ID instead of button text to avoid translation issues
+                    let textureName = canvasId.replace('Canvas', '').toLowerCase();
+                    if (textureName === 'orma') textureName = 'orma_texture';
+                    if (textureName === 'normals') textureName = 'normal_map';
+                    if (textureName === 'base') textureName = 'base_color';
+                    if (textureName === 'ao') textureName = 'ambient_occlusion';
+                    if (textureName === 'height') textureName = 'height_map';
+                    downloadCanvasAsImage(canvas, `${textureName}.png`);
+                });
+            });
+
+            async function createZipAndDownload(textures, filename) {
+                const zip = new JSZip();
+                for (const texture of textures) {
+                    const dataURL = texture.canvas.toDataURL('image/png');
+                    const blob = await fetch(dataURL).then(res => res.blob());
+                    zip.file(texture.name, blob);
+                }
+                const content = await zip.generateAsync({type:"blob"});
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = URL.createObjectURL(content);
+                link.click();
+            }
+
+            packDownloadBtn.addEventListener('click', function() {
+                const textures = [
+                    { canvas: aoCanvas, name: 'ambient_occlusion.png' },
+                    { canvas: roughnessCanvas, name: 'roughness.png' },
+                    { canvas: metallicCanvas, name: 'metallic.png' },
+                    { canvas: heightCanvas, name: 'height_map.png' },
+                    { canvas: ormaCanvas, name: 'orma_texture.png' }
+                ];
+                if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
+                createZipAndDownload(textures, 'orma_textures.zip');
+            });
+
+            armPackDownloadBtn.addEventListener('click', function() {
+                const armCanvas = document.createElement('canvas');
+                armCanvas.width = aoCanvas.width;
+                armCanvas.height = aoCanvas.height;
+                const armCtx = armCanvas.getContext('2d');
+                const armImageData = armCtx.createImageData(armCanvas.width, armCanvas.height);
+                const armData = armImageData.data;
+                const aoData = aoCanvas.getContext('2d').getImageData(0, 0, armCanvas.width, armCanvas.height).data;
+                const roughnessData = roughnessCanvas.getContext('2d').getImageData(0, 0, armCanvas.width, armCanvas.height).data;
+                const metallicData = metallicCanvas.getContext('2d').getImageData(0, 0, armCanvas.width, armCanvas.height).data;
+                for (let i = 0; i < armData.length; i += 4) {
+                    armData[i] = aoData[i];
+                    armData[i + 1] = roughnessData[i];
+                    armData[i + 2] = metallicData[i];
+                    armData[i + 3] = 255;
+                }
+                armCtx.putImageData(armImageData, 0, 0);
+                const textures = [{ canvas: armCanvas, name: 'arm_texture.png' }];
+                if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
+                createZipAndDownload(textures, 'arm_textures.zip');
+            });
+
+            allTexturesPackDownloadBtn.addEventListener('click', function() {
+                const textures = [
+                    { canvas: baseCanvas, name: 'base_color.png' },
+                    { canvas: aoCanvas, name: 'ambient_occlusion.png' },
+                    { canvas: roughnessCanvas, name: 'roughness.png' },
+                    { canvas: metallicCanvas, name: 'metallic.png' },
+                    { canvas: heightCanvas, name: 'height_map.png' }
+                ];
+                if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
+                createZipAndDownload(textures, 'all_textures.zip');
+            });
+
+            // Initial generation to show UI
+            generateTextures();
+        });
+    </script>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script>
+        document.getElementById('resetLangBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            // Borrar cookies de Google Translate para reiniciar la preferencia
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
