@@ -1,3 +1,40 @@
+# ORMA/ARM Texture Generator for inzoi & Unreal Engine 5 🎨
+License Platform
+
+A free and open-source web tool for generating PBR (Physically Based Rendering) textures optimized for inzoi and Unreal Engine 5.4/5.6.
+
+This tool allows you to create ORMA (Occlusion, Roughness, Metallic, Alpha) and ARM packaged maps directly from your browser, without the need to install complex software.
+
+🚀 Key Features
+Procedural Generation: Creates Ambient Occlusion (AO), Roughness, and Metallic maps from a single base color image.
+
+# ORMA/ARM Packaging: Exports textures with the correct channels for UE5 and inzoi:
+🔴 R: Ambient Occlusion
+🟢 G: Roughness
+🔵 B: Metallic
+⚪ A: Alpha / Height
+Material Presets: Ready-to-use configurations: Wool, Silk, Leather, Metal, Plastic, Hair, etc.
+Perlin Noise: Adds realistic imperfections and micro-details to the roughness channel to avoid the "plastic" effect.
+Normal Maps: Automatic generation of normal maps with intensity control.
+Real-Time Preview: See changes instantly as you adjust the sliders.
+Internationalization: Automatically translated into multiple languages ​​using Google Translate.
+
+100% Client-Side: Works in your browser. Your images are not uploaded to any server.
+
+🛠️ How to Use
+Upload your image: Upload a base texture (Base Color).
+
+Choose a Preset: Select the material type (e.g., "Fabric: Wool") or adjust the values ​​manually.
+Adjust: Use the sliders to refine the roughness, metallic effect, or noise intensity.
+Download:
+Download the individual textures.
+
+Or download the ORMA package ready for the game engine.
+
+📦 Installation
+No installation required. Simply open the index.html file in any modern web browser or host it on GitHub Pages.
+
+
 # Generador de Texturas ORMA/ARM para inzoi & Unreal Engine 5 🎨
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg) ![Platform](https://img.shields.io/badge/platform-Web-orange.svg)
@@ -39,5 +76,6 @@ No requiere instalación. Simplemente abre el archivo `index.html` en cualquier 
 Este proyecto está bajo la Licencia MIT - mira el archivo LICENSE para más detalles.
 
 ---
+
 
 *Creado para la comunidad de modding de inzoi.*
