@@ -117,7 +117,7 @@
             letter-spacing: 0.5px;
         }
         
-        #generateBtn, #srgbConvertBtn, #printExtractBtn {
+        #generateBtn, #srgbConvertBtn, #printExtractBtn, #signGenerateBtn {
             background: linear-gradient(to right, var(--primary-color), #2980b9);
             color: white;
             width: 100%;
@@ -130,13 +130,13 @@
             border-color: var(--primary-color);
         }
 
-        #generateBtn:hover, #srgbConvertBtn:hover, #printExtractBtn:hover {
+        #generateBtn:hover, #srgbConvertBtn:hover, #printExtractBtn:hover, #signGenerateBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(52, 152, 219, 0.4);
             background: linear-gradient(to right, #2980b9, var(--primary-color));
         }
 
-        #srgbStatus, #printStatus {
+        #srgbStatus, #printStatus, #signStatus {
             margin-top: 12px;
             font-size: 0.95rem;
             color: var(--dark-color);
@@ -525,6 +525,11 @@
                 <input type="color" id="printCustomColor" value="#ffffff" style="margin-top: 8px; width: 70px; height: 36px; padding: 2px; border: 2px solid #ddd; border-radius: 4px;">
             </div>
             <div class="control-group">
+                <label for="printVariants">Color variants (optional, comma-separated hex):</label>
+                <input type="text" id="printVariants" placeholder="#ffffff, #000000, #e74c3c" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: var(--border-radius); font-size: 1rem;">
+                <small>If filled, the download becomes a ZIP with one PNG per color (same design, recolored ink)</small>
+            </div>
+            <div class="control-group">
                 <label>Alpha cleanup levels:</label>
                 <div class="slider-row">
                     <span style="width: 40px;">Low</span>
@@ -544,6 +549,67 @@
                 <div class="texture-title">Preview (checkerboard = transparent)</div>
                 <canvas id="printPreviewCanvas" style="background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0); background-size: 24px 24px;"></canvas>
                 <button class="download-btn" id="printDownloadBtn"><span>Download Print PNG</span></button>
+            </div>
+        </div>
+
+        <div class="controls" id="signGenerator">
+            <h3 style="margin-bottom: 15px; color: var(--dark-color);">Sign / Lettering Generator (for decals)</h3>
+            <div class="instructions">
+                <ul>
+                    <li>Type your text, pick a font and colors, and export a transparent PNG ready to use as a decal (DECALmachine, KIT OPS, UE) on bottles, mugs, glass, signs&hellip;</li>
+                    <li>You can load your own font file (.ttf / .otf / .woff) &mdash; it never leaves your PC</li>
+                    <li>Lossless export: exact colors and clean antialiased edges, no dark fringes</li>
+                </ul>
+            </div>
+            <div class="control-group">
+                <label for="signText">Text (multi-line supported):</label>
+                <textarea id="signText" rows="3" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: var(--border-radius); font-size: 1rem; resize: vertical; font-family: inherit;">Your Text</textarea>
+            </div>
+            <div class="control-group">
+                <label for="signFontSelect">Font:</label>
+                <select id="signFontSelect">
+                    <option value="Arial" selected>Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Impact">Impact</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Trebuchet MS">Trebuchet MS</option>
+                    <option value="Comic Sans MS">Comic Sans MS</option>
+                    <option value="Segoe Script">Segoe Script</option>
+                    <option value="Brush Script MT">Brush Script MT</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="signFontFile">Or load your own font file (.ttf / .otf / .woff):</label>
+                <input type="file" id="signFontFile" accept=".ttf,.otf,.woff,.woff2">
+            </div>
+            <div class="control-group">
+                <label>Style:</label>
+                <label style="display: inline-block; margin-right: 20px; font-weight: normal;"><input type="checkbox" id="signBold" checked> Bold</label>
+                <label style="display: inline-block; font-weight: normal;"><input type="checkbox" id="signItalic"> Italic</label>
+            </div>
+            <div class="control-group">
+                <label for="signSize">Font size (px):</label>
+                <div class="slider-row">
+                    <input type="range" id="signSize" min="32" max="1024" value="256">
+                    <input type="number" id="signSizeNum" min="32" max="1024" value="256">
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Colors:</label>
+                <div style="display: flex; gap: 25px; flex-wrap: wrap; align-items: center;">
+                    <span>Text <input type="color" id="signFillColor" value="#ffffff" style="width: 60px; height: 34px; padding: 2px; border: 2px solid #ddd; border-radius: 4px; vertical-align: middle;"></span>
+                    <span>Outline <input type="color" id="signOutlineColor" value="#000000" style="width: 60px; height: 34px; padding: 2px; border: 2px solid #ddd; border-radius: 4px; vertical-align: middle;"></span>
+                    <span>Outline width <input type="number" id="signOutlineWidth" min="0" max="64" value="0" style="width: 70px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; text-align: center;"></span>
+                </div>
+            </div>
+            <button id="signGenerateBtn"><span>Generate Sign</span></button>
+            <div id="signStatus"></div>
+            <div class="texture-container" id="signPreviewContainer" style="margin-top: 15px; display: none; min-width: 0;">
+                <div class="texture-title">Preview (checkerboard = transparent)</div>
+                <canvas id="signPreviewCanvas" style="background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0); background-size: 24px 24px;"></canvas>
+                <button class="download-btn" id="signDownloadBtn"><span>Download Sign PNG</span></button>
             </div>
         </div>
 
@@ -1602,11 +1668,46 @@
 
             printExtractBtn.addEventListener('click', runPrintExtraction);
 
+            function hexToRgb(hex) {
+                return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+            }
+
+            // Same design, different ink color: keeps the alpha, replaces RGB.
+            function recolorPrint(imageData, rgb) {
+                const out = new ImageData(imageData.width, imageData.height);
+                const s = imageData.data, o = out.data;
+                for (let i = 0; i < s.length; i += 4) {
+                    o[i] = rgb[0]; o[i + 1] = rgb[1]; o[i + 2] = rgb[2]; o[i + 3] = s[i + 3];
+                }
+                return out;
+            }
+
+            function parsePrintVariants() {
+                return document.getElementById('printVariants').value
+                    .split(',')
+                    .map(t => t.trim())
+                    .filter(t => /^#?[0-9a-fA-F]{6}$/.test(t))
+                    .map(t => t.startsWith('#') ? t : '#' + t);
+            }
+
             printDownloadBtn.addEventListener('click', async function () {
                 if (!extractedPrints.length) return;
                 printDownloadBtn.disabled = true;
                 try {
-                    if (extractedPrints.length === 1) {
+                    const variants = parsePrintVariants();
+                    if (variants.length) {
+                        printStatus.textContent = 'Creating color variants ZIP...';
+                        const zip = new JSZip();
+                        for (const p of extractedPrints) {
+                            const base = p.name.replace(/\.png$/, '');
+                            for (const hex of variants) {
+                                zip.file(`${base}_${hex.slice(1)}.png`,
+                                    await encodePngLossless(recolorPrint(p.imageData, hexToRgb(hex))));
+                            }
+                        }
+                        triggerBlobDownload(await zip.generateAsync({ type: 'blob' }), 'prints_variants.zip');
+                        printStatus.textContent = `${extractedPrints.length} print(s) x ${variants.length} color(s) zipped.`;
+                    } else if (extractedPrints.length === 1) {
                         triggerBlobDownload(await encodePngLossless(extractedPrints[0].imageData), extractedPrints[0].name);
                     } else {
                         printStatus.textContent = 'Creating ZIP...';
@@ -1618,6 +1719,126 @@
                 } finally {
                     printDownloadBtn.disabled = false;
                 }
+            });
+
+            // --- Sign / Lettering Generator ---
+            const signText = document.getElementById('signText');
+            const signFontSelect = document.getElementById('signFontSelect');
+            const signFontFile = document.getElementById('signFontFile');
+            const signBold = document.getElementById('signBold');
+            const signItalic = document.getElementById('signItalic');
+            const signSize = document.getElementById('signSize');
+            const signSizeNum = document.getElementById('signSizeNum');
+            const signFillColor = document.getElementById('signFillColor');
+            const signOutlineColor = document.getElementById('signOutlineColor');
+            const signOutlineWidth = document.getElementById('signOutlineWidth');
+            const signGenerateBtn = document.getElementById('signGenerateBtn');
+            const signStatus = document.getElementById('signStatus');
+            const signPreviewContainer = document.getElementById('signPreviewContainer');
+            const signPreviewCanvas = document.getElementById('signPreviewCanvas');
+            const signDownloadBtn = document.getElementById('signDownloadBtn');
+            let customFontFamily = null;
+            let signResult = null;
+
+            signSize.addEventListener('input', () => { signSizeNum.value = signSize.value; });
+            signSizeNum.addEventListener('input', () => { signSize.value = signSizeNum.value; });
+
+            signFontFile.addEventListener('change', async function (e) {
+                const f = e.target.files && e.target.files[0];
+                if (!f) return;
+                try {
+                    const face = new FontFace('SignCustomFont', await f.arrayBuffer());
+                    await face.load();
+                    document.fonts.add(face);
+                    customFontFamily = 'SignCustomFont';
+                    signStatus.textContent = `Font "${f.name}" loaded — it overrides the list (clear the file input to go back).`;
+                } catch (err) {
+                    customFontFamily = null;
+                    signStatus.textContent = 'Could not load that font file.';
+                }
+                if (!e.target.files.length) customFontFamily = null;
+            });
+
+            // Text is rasterized in white to get exact antialiased coverage in
+            // the alpha channel, then fill and outline are composited with the
+            // chosen colors directly in ImageData — colors stay exact and the
+            // canvas premultiplied store never touches the result.
+            function renderSign() {
+                const text = signText.value.replace(/\r/g, '');
+                if (!text.trim()) return null;
+                const lines = text.split('\n');
+                const size = Math.max(8, parseInt(signSize.value) || 256);
+                const family = customFontFamily || signFontSelect.value;
+                const font = `${signItalic.checked ? 'italic ' : ''}${signBold.checked ? 'bold ' : ''}${size}px "${family}"`;
+                const ow = Math.max(0, parseInt(signOutlineWidth.value) || 0);
+                const pad = Math.ceil(size * 0.25) + ow;
+                const meas = document.createElement('canvas').getContext('2d');
+                meas.font = font;
+                let maxW = 1;
+                for (const ln of lines) maxW = Math.max(maxW, meas.measureText(ln).width);
+                const lineH = size * 1.25;
+                const w = Math.ceil(maxW + pad * 2);
+                const h = Math.ceil(lineH * lines.length + pad * 2);
+
+                const drawPass = (stroke) => {
+                    const c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    const ctx = c.getContext('2d', { willReadFrequently: true });
+                    ctx.font = font;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = ow * 2;
+                    ctx.lineJoin = 'round';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    lines.forEach((ln, i) => {
+                        const y = pad + lineH * (i + 0.5);
+                        if (stroke) ctx.strokeText(ln, w / 2, y);
+                        else ctx.fillText(ln, w / 2, y);
+                    });
+                    return ctx.getImageData(0, 0, w, h);
+                };
+                const fillPass = drawPass(false);
+                const strokePass = ow > 0 ? drawPass(true) : null;
+                const fillRgb = hexToRgb(signFillColor.value);
+                const outRgb = hexToRgb(signOutlineColor.value);
+                const out = new ImageData(w, h);
+                const o = out.data, fd = fillPass.data, sd = strokePass ? strokePass.data : null;
+                for (let i = 0; i < o.length; i += 4) {
+                    const aF = fd[i + 3] / 255;
+                    const aS = sd ? sd[i + 3] / 255 : 0;
+                    const aOut = aF + aS * (1 - aF);
+                    if (aOut === 0) {
+                        o[i] = fillRgb[0]; o[i + 1] = fillRgb[1]; o[i + 2] = fillRgb[2]; o[i + 3] = 0;
+                    } else {
+                        for (let k = 0; k < 3; k++) {
+                            o[i + k] = Math.round((fillRgb[k] * aF + outRgb[k] * aS * (1 - aF)) / aOut);
+                        }
+                        o[i + 3] = Math.round(aOut * 255);
+                    }
+                }
+                return out;
+            }
+
+            signGenerateBtn.addEventListener('click', async function () {
+                if (customFontFamily) { try { await document.fonts.load(`16px "${customFontFamily}"`); } catch (e) {} }
+                signResult = renderSign();
+                if (!signResult) {
+                    signStatus.textContent = 'Type some text first.';
+                    signPreviewContainer.style.display = 'none';
+                    return;
+                }
+                signPreviewCanvas.width = signResult.width;
+                signPreviewCanvas.height = signResult.height;
+                signPreviewCanvas.getContext('2d').putImageData(signResult, 0, 0);
+                signPreviewContainer.style.display = 'block';
+                signStatus.textContent = `Sign generated (${signResult.width}x${signResult.height}px).`;
+            });
+
+            signDownloadBtn.addEventListener('click', async function () {
+                if (!signResult) return;
+                const slug = signText.value.trim().slice(0, 24).replace(/[^\w-]+/g, '_') || 'sign';
+                triggerBlobDownload(await encodePngLossless(signResult), `${slug}_sign.png`);
             });
 
             // Initial generation to show UI
