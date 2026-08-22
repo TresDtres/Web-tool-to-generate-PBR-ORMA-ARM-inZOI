@@ -117,7 +117,7 @@
             letter-spacing: 0.5px;
         }
         
-        #generateBtn {
+        #generateBtn, #srgbConvertBtn, #printExtractBtn {
             background: linear-gradient(to right, var(--primary-color), #2980b9);
             color: white;
             width: 100%;
@@ -130,10 +130,17 @@
             border-color: var(--primary-color);
         }
 
-        #generateBtn:hover {
+        #generateBtn:hover, #srgbConvertBtn:hover, #printExtractBtn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(52, 152, 219, 0.4);
             background: linear-gradient(to right, #2980b9, var(--primary-color));
+        }
+
+        #srgbStatus, #printStatus {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            color: var(--dark-color);
+            min-height: 1.4em;
         }
         
         .image-preview {
@@ -458,7 +465,88 @@
 
             <button id="generateBtn"><span>Generate Textures</span></button>
         </div>
-        
+
+        <div class="controls" id="srgbConverter">
+            <h3 style="margin-bottom: 15px; color: var(--dark-color);">RGB &rarr; sRGB Image Converter</h3>
+            <div class="instructions">
+                <ul>
+                    <li>Converts images to the sRGB color space: embedded ICC profiles are applied on decode and the output PNG is tagged as sRGB</li>
+                    <li>Select one or more images, or an entire folder</li>
+                    <li>A single image downloads directly; multiple images download as a ZIP (subfolder structure is preserved)</li>
+                    <li><strong>Normal maps / data textures:</strong> enable "Non-color data" so embedded color profiles or gamma tags are ignored and pixel values pass through untouched</li>
+                </ul>
+            </div>
+            <div class="control-group">
+                <label for="srgbFilesInput">Image(s):</label>
+                <input type="file" id="srgbFilesInput" accept="image/*" multiple>
+            </div>
+            <div class="control-group">
+                <label for="srgbFolderInput">Or an entire folder:</label>
+                <input type="file" id="srgbFolderInput" webkitdirectory directory multiple>
+            </div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="srgbNonColorData"> Non-color data (normal maps, roughness, masks) &mdash; ignore color profiles, pass pixel values through untouched
+                </label>
+            </div>
+            <button id="srgbConvertBtn"><span>Convert to sRGB</span></button>
+            <div id="srgbStatus"></div>
+        </div>
+
+        <div class="controls" id="printExtractor">
+            <h3 style="margin-bottom: 15px; color: var(--dark-color);">T-Shirt Print Extractor (transparent background)</h3>
+            <div class="instructions">
+                <ul>
+                    <li>Removes a solid black or white background and keeps only the design, with real transparency in the alpha channel</li>
+                    <li>Ideal for prints/decals: use the result as base color of a Masked material (opacity from alpha)</li>
+                    <li>Output PNG is encoded losslessly &mdash; colors stay exact even in transparent areas (no black fringes in mipmaps)</li>
+                </ul>
+            </div>
+            <div class="control-group">
+                <label for="printFilesInput">Image(s):</label>
+                <input type="file" id="printFilesInput" accept="image/*" multiple>
+            </div>
+            <div class="control-group">
+                <label for="printBgSelect">Background to remove:</label>
+                <select id="printBgSelect">
+                    <option value="auto" selected>Auto (detect from corners)</option>
+                    <option value="black">Black</option>
+                    <option value="white">White</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="printOutputSelect">Print color:</label>
+                <select id="printOutputSelect">
+                    <option value="keep" selected>Keep original colors</option>
+                    <option value="white">Solid white</option>
+                    <option value="black">Solid black</option>
+                    <option value="custom">Custom color</option>
+                </select>
+                <input type="color" id="printCustomColor" value="#ffffff" style="margin-top: 8px; width: 70px; height: 36px; padding: 2px; border: 2px solid #ddd; border-radius: 4px;">
+            </div>
+            <div class="control-group">
+                <label>Alpha cleanup levels:</label>
+                <div class="slider-row">
+                    <span style="width: 40px;">Low</span>
+                    <input type="range" id="printCutLow" min="0" max="50" value="5">
+                    <input type="number" id="printCutLowNum" min="0" max="50" value="5">
+                </div>
+                <div class="slider-row" style="margin-top: 8px;">
+                    <span style="width: 40px;">High</span>
+                    <input type="range" id="printCutHigh" min="50" max="100" value="95">
+                    <input type="number" id="printCutHighNum" min="50" max="100" value="95">
+                </div>
+                <small>Below Low &rarr; fully transparent (cleans background noise) &middot; Above High &rarr; fully opaque</small>
+            </div>
+            <button id="printExtractBtn"><span>Extract Print</span></button>
+            <div id="printStatus"></div>
+            <div class="texture-container" id="printPreviewContainer" style="margin-top: 15px; display: none; min-width: 0;">
+                <div class="texture-title">Preview (checkerboard = transparent)</div>
+                <canvas id="printPreviewCanvas" style="background-image: conic-gradient(#cccccc 25%, #ffffff 0 50%, #cccccc 0 75%, #ffffff 0); background-size: 24px 24px;"></canvas>
+                <button class="download-btn" id="printDownloadBtn"><span>Download Print PNG</span></button>
+            </div>
+        </div>
+
         <div id="resultsContainer" class="hidden">
             <div id="imagePreview" class="image-preview">
                 <div class="texture-container" id="baseContainer">
@@ -1107,6 +1195,7 @@
                     ormaData[i + 3] = heightData[i] * alphaIntensity;
                 }
                 ctx.putImageData(ormaImageData, 0, 0);
+                losslessData.ormaCanvas = ormaImageData;
             }
 
             // Normal map (with strength)
@@ -1144,16 +1233,51 @@
                 ctx.putImageData(normalImageData, 0, 0);
             }
 
-            // Download functions (same as before)
-            function downloadCanvasAsImage(canvas, filename) {
-                const link = document.createElement('a');
-                link.download = filename;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+            // --- Lossless PNG export ---
+            // The 2D canvas stores premultiplied alpha: exporting via toDataURL
+            // corrupts RGB in pixels with alpha<255 (badly at low alpha). For
+            // packed textures that carry data in alpha (ORMA: height in A) we
+            // encode the PNG straight from the computed ImageData instead.
+            const losslessData = {};
+
+            async function encodePngLossless(imageData) {
+                const width = imageData.width, height = imageData.height, data = imageData.data;
+                const raw = new Uint8Array(height * (1 + width * 4));
+                for (let y = 0; y < height; y++) {
+                    const rowStart = y * (1 + width * 4);
+                    raw[rowStart] = 0; // filter: None
+                    raw.set(data.subarray(y * width * 4, (y + 1) * width * 4), rowStart + 1);
+                }
+                const stream = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'));
+                const compressed = new Uint8Array(await new Response(stream).arrayBuffer());
+                const ihdr = new Uint8Array(13);
+                const dv = new DataView(ihdr.buffer);
+                dv.setUint32(0, width);
+                dv.setUint32(4, height);
+                ihdr[8] = 8;  // bit depth
+                ihdr[9] = 6;  // color type: RGBA
+                return new Blob([
+                    new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+                    makePngChunk('IHDR', ihdr),
+                    makePngChunk('IDAT', compressed),
+                    makePngChunk('IEND', new Uint8Array(0))
+                ], { type: 'image/png' });
+            }
+
+            async function canvasEntryToBlob(canvas, imageData) {
+                if (imageData && typeof CompressionStream === 'function') {
+                    try {
+                        return await encodePngLossless(imageData);
+                    } catch (e) {
+                        // e.g. out of memory at 8K: fall back to the canvas path
+                    }
+                }
+                const dataURL = canvas.toDataURL('image/png');
+                return fetch(dataURL).then(res => res.blob());
             }
 
             downloadButtons.forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', async function() {
                     const canvasId = this.getAttribute('data-canvas');
                     const canvas = document.getElementById(canvasId);
                     // Derive filename from canvas ID instead of button text to avoid translation issues
@@ -1163,16 +1287,14 @@
                     if (textureName === 'base') textureName = 'base_color';
                     if (textureName === 'ao') textureName = 'ambient_occlusion';
                     if (textureName === 'height') textureName = 'height_map';
-                    downloadCanvasAsImage(canvas, `${textureName}.png`);
+                    triggerBlobDownload(await canvasEntryToBlob(canvas, losslessData[canvasId]), `${textureName}.png`);
                 });
             });
 
             async function createZipAndDownload(textures, filename) {
                 const zip = new JSZip();
                 for (const texture of textures) {
-                    const dataURL = texture.canvas.toDataURL('image/png');
-                    const blob = await fetch(dataURL).then(res => res.blob());
-                    zip.file(texture.name, blob);
+                    zip.file(texture.name, await canvasEntryToBlob(texture.canvas, texture.imageData));
                 }
                 const content = await zip.generateAsync({type:"blob"});
                 const link = document.createElement('a');
@@ -1187,7 +1309,7 @@
                     { canvas: roughnessCanvas, name: 'roughness.png' },
                     { canvas: metallicCanvas, name: 'metallic.png' },
                     { canvas: heightCanvas, name: 'height_map.png' },
-                    { canvas: ormaCanvas, name: 'orma_texture.png' }
+                    { canvas: ormaCanvas, name: 'orma_texture.png', imageData: losslessData.ormaCanvas }
                 ];
                 if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
                 createZipAndDownload(textures, 'orma_textures.zip');
@@ -1210,7 +1332,7 @@
                     armData[i + 3] = 255;
                 }
                 armCtx.putImageData(armImageData, 0, 0);
-                const textures = [{ canvas: armCanvas, name: 'arm_texture.png' }];
+                const textures = [{ canvas: armCanvas, name: 'arm_texture.png', imageData: armImageData }];
                 if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
                 createZipAndDownload(textures, 'arm_textures.zip');
             });
@@ -1225,6 +1347,277 @@
                 ];
                 if (generateNormalsCheckbox.checked) textures.push({ canvas: normalsCanvas, name: 'normal_map.png' });
                 createZipAndDownload(textures, 'all_textures.zip');
+            });
+
+            // --- RGB -> sRGB Converter ---
+            const srgbFilesInput = document.getElementById('srgbFilesInput');
+            const srgbFolderInput = document.getElementById('srgbFolderInput');
+            const srgbConvertBtn = document.getElementById('srgbConvertBtn');
+            const srgbStatus = document.getElementById('srgbStatus');
+            const srgbNonColorCheckbox = document.getElementById('srgbNonColorData');
+
+            const crcTable = (() => {
+                const t = new Uint32Array(256);
+                for (let n = 0; n < 256; n++) {
+                    let c = n;
+                    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                    t[n] = c >>> 0;
+                }
+                return t;
+            })();
+
+            function crc32(bytes) {
+                let c = 0xFFFFFFFF;
+                for (let i = 0; i < bytes.length; i++) c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+                return (c ^ 0xFFFFFFFF) >>> 0;
+            }
+
+            function makePngChunk(type, data) {
+                const out = new Uint8Array(12 + data.length);
+                const dv = new DataView(out.buffer);
+                dv.setUint32(0, data.length);
+                for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+                out.set(data, 8);
+                dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+                return out;
+            }
+
+            // Canvas pixels are already sRGB; this stamps the PNG with sRGB + gAMA
+            // chunks so other software reads it as such. With insertSrgbTags=false
+            // it only strips existing color chunks (untagged output for data maps).
+            function tagPngAsSrgb(buffer, insertSrgbTags = true) {
+                const src = new Uint8Array(buffer);
+                const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+                for (let i = 0; i < 8; i++) if (src[i] !== sig[i]) return src;
+                const dv = new DataView(buffer);
+                const parts = [src.subarray(0, 8)];
+                let pos = 8;
+                while (pos + 12 <= src.length) {
+                    const len = dv.getUint32(pos);
+                    const type = String.fromCharCode(src[pos + 4], src[pos + 5], src[pos + 6], src[pos + 7]);
+                    const end = pos + 12 + len;
+                    if (!['sRGB', 'gAMA', 'cHRM', 'iCCP'].includes(type)) parts.push(src.subarray(pos, end));
+                    if (type === 'IHDR' && insertSrgbTags) {
+                        parts.push(makePngChunk('sRGB', new Uint8Array([0])));
+                        const gama = new Uint8Array(4);
+                        new DataView(gama.buffer).setUint32(0, 45455);
+                        parts.push(makePngChunk('gAMA', gama));
+                    }
+                    pos = end;
+                }
+                const out = new Uint8Array(parts.reduce((s, p) => s + p.length, 0));
+                let o = 0;
+                for (const p of parts) { out.set(p, o); o += p.length; }
+                return out;
+            }
+
+            // The browser applies any embedded ICC profile when decoding onto a
+            // canvas (canvas works in sRGB), so drawing + re-exporting IS the
+            // color conversion. Untagged images are assumed to be sRGB already.
+            // nonColorData decodes with color management OFF so data textures
+            // (normal maps, masks) pass through bit-exact even if wrongly tagged.
+            async function decodeForConversion(file, nonColorData) {
+                if (nonColorData && typeof createImageBitmap === 'function') {
+                    return createImageBitmap(file, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+                }
+                const url = URL.createObjectURL(file);
+                try {
+                    return await new Promise((resolve, reject) => {
+                        const im = new Image();
+                        im.onload = () => resolve(im);
+                        im.onerror = () => reject(new Error('Could not decode image'));
+                        im.src = url;
+                    });
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            async function fileToSrgbPngBlob(file, nonColorData) {
+                const source = await decodeForConversion(file, nonColorData);
+                const canvas = document.createElement('canvas');
+                canvas.width = source.naturalWidth || source.width;
+                canvas.height = source.naturalHeight || source.height;
+                canvas.getContext('2d').drawImage(source, 0, 0);
+                if (source.close) source.close();
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                if (!blob) throw new Error('PNG export failed');
+                const processed = tagPngAsSrgb(await blob.arrayBuffer(), !nonColorData);
+                return new Blob([processed], { type: 'image/png' });
+            }
+
+            function triggerBlobDownload(blob, filename) {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+            }
+
+            async function runSrgbConversion() {
+                const files = [...(srgbFilesInput.files || []), ...(srgbFolderInput.files || [])]
+                    .filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|avif|tiff?)$/i.test(f.name));
+                if (!files.length) {
+                    srgbStatus.textContent = 'No images selected.';
+                    return;
+                }
+                srgbConvertBtn.disabled = true;
+                const nonColorData = srgbNonColorCheckbox.checked;
+                const suffix = nonColorData ? '_data.png' : '_srgb.png';
+                const results = [];
+                const failed = [];
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    srgbStatus.textContent = `Converting ${i + 1}/${files.length}: ${f.name}...`;
+                    try {
+                        const blob = await fileToSrgbPngBlob(f, nonColorData);
+                        const relPath = (f.webkitRelativePath || f.name).replace(/\.[^./\\]+$/, '') + suffix;
+                        results.push({ name: relPath, blob });
+                    } catch (e) {
+                        failed.push(f.name);
+                    }
+                }
+                if (results.length === 1) {
+                    triggerBlobDownload(results[0].blob, results[0].name.split('/').pop());
+                } else if (results.length > 1) {
+                    srgbStatus.textContent = 'Creating ZIP...';
+                    const zip = new JSZip();
+                    results.forEach(r => zip.file(r.name, r.blob));
+                    triggerBlobDownload(await zip.generateAsync({ type: 'blob' }), 'srgb_images.zip');
+                }
+                srgbStatus.textContent = `${results.length} image(s) ` +
+                    (nonColorData ? 'passed through untouched (non-color data).' : 'converted to sRGB.') +
+                    (failed.length ? ` Failed: ${failed.join(', ')}` : '');
+                srgbConvertBtn.disabled = false;
+            }
+
+            srgbConvertBtn.addEventListener('click', runSrgbConversion);
+
+            // --- T-Shirt Print Extractor ---
+            const printFilesInput = document.getElementById('printFilesInput');
+            const printBgSelect = document.getElementById('printBgSelect');
+            const printOutputSelect = document.getElementById('printOutputSelect');
+            const printCustomColor = document.getElementById('printCustomColor');
+            const printCutLow = document.getElementById('printCutLow');
+            const printCutHigh = document.getElementById('printCutHigh');
+            const printExtractBtn = document.getElementById('printExtractBtn');
+            const printStatus = document.getElementById('printStatus');
+            const printPreviewContainer = document.getElementById('printPreviewContainer');
+            const printPreviewCanvas = document.getElementById('printPreviewCanvas');
+            const printDownloadBtn = document.getElementById('printDownloadBtn');
+            let extractedPrints = [];
+
+            [['printCutLow', 'printCutLowNum'], ['printCutHigh', 'printCutHighNum']].forEach(([sId, nId]) => {
+                const s = document.getElementById(sId), n = document.getElementById(nId);
+                s.addEventListener('input', () => { n.value = s.value; });
+                n.addEventListener('input', () => { s.value = n.value; });
+            });
+
+            // Separates a design from a solid black/white background. For a
+            // blended pixel c = color*a + bg*(1-a) the implied alpha is the
+            // distance from the background, and the true color is un-blended
+            // as (c - bg*(1-a)) / a — exact for antialiased edges.
+            function extractPrint(srcData, bgIsWhite, outputMode, customRgb, cutLow, cutHigh) {
+                const d = srcData.data;
+                const out = new ImageData(srcData.width, srcData.height);
+                const o = out.data;
+                const lo = cutLow * 255 / 100, hi = cutHigh * 255 / 100;
+                const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
+                for (let i = 0; i < d.length; i += 4) {
+                    const r = d[i], g = d[i + 1], b = d[i + 2];
+                    let a = bgIsWhite ? 255 - Math.min(r, g, b) : Math.max(r, g, b);
+                    a = a <= lo ? 0 : a >= hi ? 255 : Math.round((a - lo) * 255 / (hi - lo));
+                    let rr, gg, bb;
+                    if (outputMode === 'white') { rr = gg = bb = 255; }
+                    else if (outputMode === 'black') { rr = gg = bb = 0; }
+                    else if (outputMode === 'custom') { rr = customRgb[0]; gg = customRgb[1]; bb = customRgb[2]; }
+                    else if (a === 0) {
+                        // color under fully transparent pixels: neutral, so
+                        // mipmaps don't average background into the edges
+                        rr = gg = bb = bgIsWhite ? 255 : 0;
+                    } else {
+                        const af = a / 255, bg = bgIsWhite ? 255 : 0;
+                        rr = clamp((r - bg * (1 - af)) / af);
+                        gg = clamp((g - bg * (1 - af)) / af);
+                        bb = clamp((b - bg * (1 - af)) / af);
+                    }
+                    o[i] = rr; o[i + 1] = gg; o[i + 2] = bb; o[i + 3] = a;
+                }
+                return out;
+            }
+
+            function detectBgIsWhite(srcData) {
+                const { width, height, data } = srcData;
+                const corners = [0, (width - 1) * 4, (height - 1) * width * 4, ((height - 1) * width + width - 1) * 4];
+                let lum = 0;
+                for (const i of corners) lum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+                return lum / corners.length > 127;
+            }
+
+            async function runPrintExtraction() {
+                const files = [...(printFilesInput.files || [])]
+                    .filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|avif)$/i.test(f.name));
+                if (!files.length) {
+                    printStatus.textContent = 'No images selected.';
+                    return;
+                }
+                printExtractBtn.disabled = true;
+                extractedPrints = [];
+                const failed = [];
+                const outputMode = printOutputSelect.value;
+                const hex = printCustomColor.value;
+                const customRgb = [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+                const cutLow = parseInt(printCutLow.value), cutHigh = parseInt(printCutHigh.value);
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    printStatus.textContent = `Extracting ${i + 1}/${files.length}: ${f.name}...`;
+                    try {
+                        const img = await decodeForConversion(f, false);
+                        const c = document.createElement('canvas');
+                        c.width = img.naturalWidth || img.width;
+                        c.height = img.naturalHeight || img.height;
+                        const ctx = c.getContext('2d', { willReadFrequently: true });
+                        ctx.drawImage(img, 0, 0);
+                        const srcData = ctx.getImageData(0, 0, c.width, c.height);
+                        const bgIsWhite = printBgSelect.value === 'auto' ? detectBgIsWhite(srcData) : printBgSelect.value === 'white';
+                        const result = extractPrint(srcData, bgIsWhite, outputMode, customRgb, cutLow, cutHigh);
+                        const name = (f.name || 'print').replace(/\.[^./\\]+$/, '') + '_print.png';
+                        extractedPrints.push({ name, imageData: result });
+                    } catch (e) {
+                        failed.push(f.name);
+                    }
+                }
+                if (extractedPrints.length) {
+                    const first = extractedPrints[0].imageData;
+                    printPreviewCanvas.width = first.width;
+                    printPreviewCanvas.height = first.height;
+                    printPreviewCanvas.getContext('2d').putImageData(first, 0, 0);
+                    printPreviewContainer.style.display = 'block';
+                }
+                printStatus.textContent = `${extractedPrints.length} print(s) extracted.` +
+                    (extractedPrints.length ? ' Review the preview, then download.' : '') +
+                    (failed.length ? ` Failed: ${failed.join(', ')}` : '');
+                printExtractBtn.disabled = false;
+            }
+
+            printExtractBtn.addEventListener('click', runPrintExtraction);
+
+            printDownloadBtn.addEventListener('click', async function () {
+                if (!extractedPrints.length) return;
+                printDownloadBtn.disabled = true;
+                try {
+                    if (extractedPrints.length === 1) {
+                        triggerBlobDownload(await encodePngLossless(extractedPrints[0].imageData), extractedPrints[0].name);
+                    } else {
+                        printStatus.textContent = 'Creating ZIP...';
+                        const zip = new JSZip();
+                        for (const p of extractedPrints) zip.file(p.name, await encodePngLossless(p.imageData));
+                        triggerBlobDownload(await zip.generateAsync({ type: 'blob' }), 'prints.zip');
+                        printStatus.textContent = `${extractedPrints.length} print(s) zipped.`;
+                    }
+                } finally {
+                    printDownloadBtn.disabled = false;
+                }
             });
 
             // Initial generation to show UI
